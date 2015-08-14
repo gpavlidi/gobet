@@ -1,24 +1,21 @@
 # gobet
-A golang betfair API implementation. Also my first golang attempt.
+A golang betfair API implementation. Supports the full API (account/betting).
+
+**WARNING: Use it in production at your own risk!**
+
+**<sub><sup>I ve been coding in Go for only a week :-p<sub><sup>**
 
 ## Example Usage
+You can see some sample code in the examples folder.
 ```
 conf := gobet.Configuration{Username: "username", Password: "pass", AppKey: "appKey", Locale: "en", LogDest: os.Stdout}
-s, err := gobet.NewSession(&conf)
-if err != nil {
-	log.Fatal("Invalid Configuration! Exiting...")
-}
+s, _ := gobet.NewSession(&conf)
 
 err = s.Login()
-if err != nil {
-	log.Fatal("Could not login! Exiting...")
-}
 defer s.Logout()
 
-log.Println("Setting Periodic Keep Alive")
 s.DoKeepAliveEvery(time.Hour * 4)
 
 input := gobet.BettingInputParams{Filter: &gobet.MarketFilter{TextQuery: "Horse Racing"}}
 eventTypes, err := s.ListEventTypes(input)
-log.Println(eventTypes)
 ```
