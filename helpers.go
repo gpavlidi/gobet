@@ -1,12 +1,18 @@
 package gobet
 
 import (
+	"bytes" //needed for debug
 	"encoding/json"
+	"io/ioutil" //needed for debug
+	"log"
 	"net/http"
 	"strings"
 )
 
-func DoRequest(verb, url, payload string, headers map[string]string, responsePtr interface{}) error {
+func DoRequest(verb, url, payload string, headers map[string]string, outputStructPointer interface{}, logger *log.Logger) error {
+	if logger == nil {
+		logger = log.New(ioutil.Discard, "", 0)
+	}
 
 	req, err := http.NewRequest(verb, url, strings.NewReader(payload))
 	for headerKey, headerVal := range headers {
@@ -16,13 +22,20 @@ func DoRequest(verb, url, payload string, headers map[string]string, responsePtr
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
+		logger.Println(err)
 		return err
-		//panic(err)
 	}
 	defer resp.Body.Close()
 
-	err = json.NewDecoder(resp.Body).Decode(responsePtr)
+	// debug request and response
+	//logger.Println(req, payload)
+	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	//logger.Println(string(bodyBytes))
+	resp.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
+	err = json.NewDecoder(resp.Body).Decode(outputStructPointer)
 	if err != nil {
+		logger.Println(err, "Got this instead: ", string(bodyBytes))
 		return err
 	}
 	return nil

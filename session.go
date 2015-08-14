@@ -6,9 +6,7 @@ import (
 	"time"
 )
 
-const loginUrl string = "https://identitysso.betfair.com/api/login"
-const logoutUrl string = "https://identitysso.betfair.com/api/logout"
-const keepAliveUrl string = "https://identitysso.betfair.com/api/keepAlive"
+const sessionUrlPrefix string = "https://identitysso.betfair.com/api/"
 
 type SessionResponse struct {
 	Token   string `json:"token"`
@@ -17,45 +15,50 @@ type SessionResponse struct {
 	Error   string `json:"error"`
 }
 
-type Session struct {
-	username, password, appKey, Token string
-}
-
-func (s Session) String() string {
-	if s.Token != "" {
-		return fmt.Sprintf("User %s IS logged in! Token: %s\n", s.username, s.Token)
-	} else {
-		return fmt.Sprintf("User %s IS NOT logged in!", s.username)
-	}
-}
-
+// below expects an appKey even though we havent logged in yet!!!
+// Passing it a random 16 char appkey
 func (s *Session) Login() error {
-	var jsonStr = fmt.Sprintf("username=%s&password=%s", s.username, s.password)
-	var headers = map[string]string{"Accept": "application/json", "X-Application": s.appKey, "Content-Type": "application/x-www-form-urlencoded"}
-	var sessionResp SessionResponse
-	err := DoRequest("POST", loginUrl, jsonStr, headers, &sessionResp)
-	s.Token = sessionResp.Token
-	fmt.Println(sessionResp)
-	return err
+	payload := fmt.Sprintf("username=%s&password=%s", s.configuration.Username, s.configuration.Password)
+	headers := map[string]string{"Accept": "application/json", "X-Application": "XXXXXXXXXXXXXXXX", "Content-Type": "application/x-www-form-urlencoded"}
+	url := fmt.Sprintf("%s%s", sessionUrlPrefix, "login")
+	response := SessionResponse{}
+	err := DoRequest("POST", url, payload, headers, &response, s.logger)
+	if err != nil {
+		return err
+	} else if response.Status == "FAIL" {
+		return errors.New("Login Failed")
+	}
+
+	s.token = response.Token
+	return nil
 }
 
 func (s *Session) Logout() error {
-	var headers = map[string]string{"Accept": "application/json", "X-Application": s.appKey, "X-Authentication": s.Token}
-	var sessionResp SessionResponse
-	err := DoRequest("GET", logoutUrl, "", headers, &sessionResp)
-	fmt.Println(sessionResp)
-	return err
+	headers := map[string]string{"Accept": "application/json", "X-Application": s.configuration.AppKey, "X-Authentication": s.token}
+	url := fmt.Sprintf("%s%s", sessionUrlPrefix, "logout")
+	response := SessionResponse{}
+	err := DoRequest("GET", url, "", headers, &response, s.logger)
+	if err != nil {
+		return err
+	} else if response.Status == "FAIL" {
+		return errors.New("Logout Failed")
+	}
+
+	return nil
 }
 
 func (s *Session) KeepAlive() error {
-	var headers = map[string]string{"Accept": "application/json", "X-Application": s.appKey, "X-Authentication": s.Token}
-	var sessionResp SessionResponse
-	err := DoRequest("GET", keepAliveUrl, "", headers, &sessionResp)
-	if err == nil && sessionResp.Status == "FAIL" {
-		err = errors.New("KeepAlive Failed")
+	headers := map[string]string{"Accept": "application/json", "X-Application": s.configuration.AppKey, "X-Authentication": s.token}
+	url := fmt.Sprintf("%s%s", sessionUrlPrefix, "keepAlive")
+	response := SessionResponse{}
+	err := DoRequest("GET", url, "", headers, &response, s.logger)
+	if err != nil {
+		return err
+	} else if response.Status == "FAIL" {
+		return errors.New("KeepAlive Failed")
 	}
-	fmt.Println(sessionResp)
-	return err
+
+	return nil
 }
 
 func (s *Session) DoKeepAliveEvery(interval time.Duration) error {
@@ -65,7 +68,7 @@ func (s *Session) DoKeepAliveEvery(interval time.Duration) error {
 			for retries := 0; retries < 5; retries++ {
 				err := s.KeepAlive()
 				if err != nil {
-					fmt.Println("Keep Alive failed. Retry ", retries+1, "in ", 3*(retries+1), "secs")
+					s.logger.Println("Keep Alive failed. Retry ", retries+1, "in ", 3*(retries+1), "secs")
 					// retry for 5 times with linear back-off
 					time.Sleep(time.Second * time.Duration(3*(retries+1)))
 				} else {
@@ -76,8 +79,4 @@ func (s *Session) DoKeepAliveEvery(interval time.Duration) error {
 		}
 	}()
 	return nil
-}
-
-func NewSession(username, password, appKey string) *Session {
-	return &Session{username: username, password: password, appKey: appKey}
 }
