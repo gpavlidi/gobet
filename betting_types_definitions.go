@@ -1,6 +1,8 @@
 package gobet
 
 import (
+	"encoding/json"
+	"strings"
 	"time"
 )
 
@@ -36,11 +38,32 @@ type BettingInputParams struct {
 	GroupBy                *GroupBy           `json:"groupBy,omitempty"`
 	IncludeItemDescription bool               `json:"includeItemDescription,omitempty"`
 	MarketId               string             `json:"marketId,omitempty"`
-	/*is instructions in API*/ PlaceInstructions []PlaceInstruction `json:"instructions,omitempty"`
-	/*is instructions in API*/ CancelInstructions []CancelInstruction `json:"instructions,omitempty"`
-	/*is instructions in API*/ UpdateInstructions []UpdateInstruction `json:"instructions,omitempty"`
-	/*is instructions in API*/ ReplaceInstructions []ReplaceInstruction `json:"instructions,omitempty"`
-	CustomerRef                                    string               `json:"customerRef,omitempty"`
+	CustomerRef            string             `json:"customerRef,omitempty"`
+	/*is instructions in API*/ PlaceInstructions []PlaceInstruction `json:"placeInstructions,omitempty"`
+	/*is instructions in API*/ CancelInstructions []CancelInstruction `json:"cancelInstructions,omitempty"`
+	/*is instructions in API*/ UpdateInstructions []UpdateInstruction `json:"updateInstructions,omitempty"`
+	/*is instructions in API*/ ReplaceInstructions []ReplaceInstruction `json:"replaceInstructions,omitempty"`
+}
+
+/*
+	below logic is needed because all XInstructions inputs need to be Json encoded to
+	'instructions'. Json package doesnt like that, so a custom MarshalJson is needed
+*/
+type BettingInputParamsRenamedInstructions BettingInputParams
+
+func (bi BettingInputParams) MarshalJSON() ([]byte, error) {
+	//using an alias for BettingInputParams to avoid infinite marshalling
+	bytes, err := json.Marshal(BettingInputParamsRenamedInstructions(bi))
+	if err != nil {
+		return bytes, err
+	}
+	jsonString := string(bytes)
+	jsonString = strings.Replace(jsonString, "placeInstructions", "instructions", -1)
+	jsonString = strings.Replace(jsonString, "cancelInstructions", "instructions", -1)
+	jsonString = strings.Replace(jsonString, "updateInstructions", "instructions", -1)
+	jsonString = strings.Replace(jsonString, "replaceInstructions", "instructions", -1)
+
+	return []byte(jsonString), err
 }
 
 // Below are Betfair API structs

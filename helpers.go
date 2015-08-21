@@ -30,12 +30,12 @@ func DoRequest(verb, url, payload string, headers map[string]string, outputStruc
 	// debug request and response
 	//logger.Println(req, payload)
 	bodyBytes, _ := ioutil.ReadAll(resp.Body)
-	//logger.Println(string(bodyBytes))
+	//logger.Println("\n\n", string(bodyBytes), "\n\n")
 	resp.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 
 	err = json.NewDecoder(resp.Body).Decode(outputStructPointer)
 	if err != nil {
-		logger.Println(err, "Got this instead: ", string(bodyBytes))
+		logger.Println(err, "Got this instead: ", "Request", req, payload, "Response", string(bodyBytes))
 		return err
 	}
 	return nil
