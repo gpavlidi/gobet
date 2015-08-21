@@ -356,13 +356,13 @@ type CurrentOrderSummary struct {
 }
 
 type PlaceInstruction struct {
-	OrderType          OrderType          `json:"orderType,omitempty"`
-	SelectionId        int64              `json:"selectionId,omitempty"`
-	Handicap           float64            `json:"handicap,omitempty"`
-	Side               Side               `json:"side,omitempty"`
-	LimitOrder         LimitOrder         `json:"limitOrder,omitempty"`
-	LimitOnCloseOrder  LimitOnCloseOrder  `json:"limitOnCloseOrder,omitempty"`
-	MarketOnCloseOrder MarketOnCloseOrder `json:"marketOnCloseOrder,omitempty"`
+	OrderType          OrderType           `json:"orderType,omitempty"`
+	SelectionId        int64               `json:"selectionId,omitempty"`
+	Handicap           float64             `json:"handicap,omitempty"`
+	Side               Side                `json:"side,omitempty"`
+	LimitOrder         *LimitOrder         `json:"limitOrder,omitempty"`
+	LimitOnCloseOrder  *LimitOnCloseOrder  `json:"limitOnCloseOrder,omitempty"`
+	MarketOnCloseOrder *MarketOnCloseOrder `json:"marketOnCloseOrder,omitempty"`
 }
 
 type PlaceExecutionReport struct {
