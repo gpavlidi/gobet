@@ -25,14 +25,14 @@ type EventScores struct {
 }
 
 type EventScore struct {
-	Name              string   `json:"name"`
-	Score             string   `json:"score"`
-	HalfTimeScore     string   `json:"halfTimeScore"`
-	FullTimeScore     string   `json:"fullTimeScore"`
-	PenaltiesScore    string   `json:"penaltiesScore"`
-	PenaltiesSequence []string `json:"penaltiesSequence"`
-	Games             string   `json:"games"`
-	Sets              string   `json:"sets"`
+	Name              string `json:"name"`
+	Score             string `json:"score"`
+	HalfTimeScore     string `json:"halfTimeScore"`
+	FullTimeScore     string `json:"fullTimeScore"`
+	PenaltiesScore    string `json:"penaltiesScore"`
+	PenaltiesSequence []bool `json:"penaltiesSequence"`
+	Games             string `json:"games"`
+	Sets              string `json:"sets"`
 }
 
 type EventUpdate struct {
